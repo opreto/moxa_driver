@@ -1,0 +1,60 @@
+**********************************************************************
+ Ubuntu 24.04.4 LTS 
+ \l 6.17.0-23-generic
+ MOXA Smartio/Industio Family Multiport Board Device Driver ver6.1
+ Release Date: 09/24/2024
+**********************************************************************
+********************************WARNING**********************************
+ MOXA Smartio/Industio Family driver may not be compatible with
+ Linux Kernel versions newer than 6.8.0 .
+ To download the latest driver, please visit Moxa at: http://www.moxa.com
+ If you still have questions, you can contact Support@moxa.com
+*************************************************************************
+warning: the compiler differs from the one used to build the kernel
+  The kernel was built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  You are using:           gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+In file included from mxser.c:64:
+/usr/src/linux-headers-6.17.0-23-generic/include/linux/pci.h: In function ‘pci_is_enabled’:
+/usr/src/linux-headers-6.17.0-23-generic/include/linux/pci.h:1372:48: warning: ordered comparison of pointer with integer zero [-Wextra]
+ 1372 |         return (atomic_read(&pdev->enable_cnt) > 0);
+      |                                                ^
+mxser.c: At top level:
+mxser.c:903:5: warning: no previous prototype for ‘mxser_initbrd’ [-Wmissing-prototypes]
+  903 | int mxser_initbrd(int board,struct mxser_hwconf *hwconf)
+      |     ^~~~~~~~~~~~~
+mxser.c:4031:6: warning: no previous prototype for ‘SDS_PORT8_DTR’ [-Wmissing-prototypes]
+ 4031 | void SDS_PORT8_DTR(int stat)
+      |      ^~~~~~~~~~~~~
+In file included from mxpcie.c:70:
+/usr/src/linux-headers-6.17.0-23-generic/include/linux/pci.h: In function ‘pci_is_enabled’:
+/usr/src/linux-headers-6.17.0-23-generic/include/linux/pci.h:1372:48: warning: ordered comparison of pointer with integer zero [-Wextra]
+ 1372 |         return (atomic_read(&pdev->enable_cnt) > 0);
+      |                                                ^
+mxpcie.c: At top level:
+mxpcie.c:605:5: warning: no previous prototype for ‘mxupcie_initbrd’ [-Wmissing-prototypes]
+  605 | int mxupcie_initbrd(int board,struct mxupcie_hwconf *hwconf)
+      |     ^~~~~~~~~~~~~~~
+mxpcie.c: In function ‘mxupcie_set_termios’:
+mxpcie.c:2221:39: warning: passing argument 2 of ‘mx_change_speed’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+ 2221 |                 mx_change_speed(info, old_termios);
+      |                                       ^~~~~~~~~~~
+mxpcie.c:414:75: note: expected ‘struct ktermios *’ but argument is of type ‘const struct ktermios *’
+  414 | static int      mx_change_speed(struct mxupcie_struct *, struct ktermios *old_termios);
+      |                                                          ~~~~~~~~~~~~~~~~~^~~~~~~~~~~
+mxpcie.c: In function ‘mx_set_interface’:
+mxpcie.c:3631:17: warning: this statement may fall through [-Wimplicit-fallthrough=]
+ 3631 |                 switch (info->board_type) {
+      |                 ^~~~~~
+mxpcie.c:3659:9: note: here
+ 3659 |         case MOXA_UIR_RS422:
+      |         ^~~~
+mxpcie.c: In function ‘mx_ioctl_special’:
+mxpcie.c:2075:25: warning: ignoring return value of ‘copy_from_user’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+ 2075 |                         copy_from_user(&pci_setting, (const void *)arg, sizeof(struct mxupcie_pci_setting));
+      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mxpcie.c: At top level:
+mxpcie.c:3510:13: warning: ‘mx_send_break’ defined but not used [-Wunused-function]
+ 3510 | static void mx_send_break(struct mxupcie_struct * info, int duration)
+      |             ^~~~~~~~~~~~~
+Skipping BTF generation for mxser.ko due to unavailability of vmlinux
+Skipping BTF generation for mxupcie.ko due to unavailability of vmlinux

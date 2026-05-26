@@ -1,0 +1,117 @@
+#!/bin/sh
+###############################################################################
+# Program:
+# 		MOXA Linux driver installer
+#	
+# History:
+# 2009/05/21
+#
+# Author:
+# Eric Lo, eric.lo@moxa.com
+#
+# Discription:
+# The script install and load the MOXA Linux driver.
+#
+###############################################################################
+
+TARGET_DRIVER1=mxser
+TARGET_DRIVER2=mxupcie
+BAN_DRIVER1=8250_moxa
+BAN_DRIVER2=8250_pci
+MXVER=`awk '{if($2=="MX_SER_VERSION"){print $3}}' mx_ver.h | sed s/\"//g`
+MAJOR_PCI=30
+MAJOR_PCIE=31
+MINOR=32
+INPUT=$1
+MOXA_VENDOR=1393
+MOXA_DEVICE="1024 1025 1027 1045 1046 1121 1144 1145 1160 1161 1182 1183 1322 1323 1342 1343 1381 1683"
+
+#
+# Information
+#
+echo "*********************************************************************"
+echo " MOXA Smartio/Industio Family Multiport Board Device Driver "
+echo " Quick install Script"
+echo "*********************************************************************"
+
+#
+# Detect Build-in Kernel Module/Driver
+#
+echo "$MOXA_DEVICE" | tr ' ' '\n' | while read i; do
+	VEN_DEV="${MOXA_VENDOR}:$i"
+	BUS_INFO=`lspci -D -n | grep $VEN_DEV | cut -c 1-12`
+	if [ -n "$BUS_INFO" ]
+	then
+		echo "$BUS_INFO" | while read j; do
+			REPROBE_MOXA_DRIVER=0
+			if [ -d "/sys/bus/pci/drivers/8250_moxa/$j" ]
+			then
+				REPROBE_MOXA_DRIVER=1
+			elif [ -d "/sys/bus/pci/drivers/serial/$j" ]
+			then
+				REPROBE_MOXA_DRIVER=1
+			fi
+			
+			if [ "$REPROBE_MOXA_DRIVER" -eq "1" ]
+			then
+				./driver/moxa_unbind
+				if [ -d "/etc/moxa" ];then
+					cp ./driver/moxa_unbind /etc/moxa/
+					cp ./driver/moxa_unbind.service /etc/systemd/system/
+					systemctl enable moxa_unbind.service
+					systemctl start moxa_unbind.service
+				else
+					mkdir /etc/moxa
+					cp ./driver/moxa_unbind /etc/moxa/
+					cp ./driver/moxa_unbind.service /etc/systemd/system/
+					systemctl enable moxa_unbind.service
+					systemctl start moxa_unbind.service
+				fi
+				break
+			fi
+		done
+		UNBIND_SERVICE=`systemctl list-unit-files | grep enabled | grep moxa_unbind.service`
+		if [ -n "$UNBIND_SERVICE" ]
+		then
+			break;
+		fi
+	fi
+done
+
+if lsmod | grep -q $TARGET_DRIVER1 ; then
+	echo "Found $TARGET_DRIVER1 in system..."
+	echo "Unloading $TARGET_DRIVER1..."
+	rmmod $TARGET_DRIVER1
+	echo "Unload $TARGET_DRIVER1 successfully."
+	echo ""
+fi
+
+if lsmod | grep -q $TARGET_DRIVER2 ; then
+	echo "Found $TARGET_DRIVER2 in system..."
+	echo "Unloading $TARGET_DRIVER2..."
+	rmmod $TARGET_DRIVER2
+	echo "Unload $TARGET_DRIVER2 successfully."
+	echo ""
+fi
+
+if [ "$INPUT" = "" ] ; then
+	INPUT="install"
+fi
+
+if make $INPUT ; then
+	echo ""
+	echo "Loading driver..."
+	modprobe $TARGET_DRIVER1
+	modprobe $TARGET_DRIVER2
+	[ -f /dev/mxser ] || rm -rf /dev/mxser
+	mknod /dev/mxser c $MAJOR_PCI $MINOR
+	chmod a+wx /dev/mxser
+	[ -f /dev/mxupcie ] || rm -rf /dev/mxupcie
+	mknod /dev/mxupcie c $MAJOR_PCIE $MINOR
+	chmod a+wx /dev/mxupcie	
+	echo "**********************************************************************"
+	echo -n " MOXA Smartio/Industio Family driver "
+	echo -n $MXVER
+        echo " loaded successfully."
+	echo "**********************************************************************"
+fi

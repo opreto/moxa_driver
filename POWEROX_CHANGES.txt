@@ -1,0 +1,72 @@
+POWEROX local modifications — MOXA Smartio/Industio kernel 6.x driver v6.1
+============================================================================
+
+Context
+-------
+Target: Ubuntu 24.04 with Linux 6.17.x (e.g. 6.17.0-23-generic), CP-132EL / PCIe
+serial boards using the mxupcie driver path.
+
+Symptom: ./mxinstall (or make in mxser/driver/kernel6.x) failed with errors such
+as unknown type name ‘gpio_param_t’ and cascading implicit-declaration errors in
+mxpcie.c.
+
+Root cause
+----------
+The vendor Makefile used:
+
+    EXTRA_CFLAGS += -DOS_LINUX
+
+Recent kernel kbuild (including 6.17) does not apply EXTRA_CFLAGS from this
+out-of-tree Makefile to the actual gcc invocation. With -DOS_LINUX missing,
+mxser/driver/CPLD/Source/platform.h falls through to its generic #else branch and
+never defines gpio_param_t; ../CPLD/Source/cpld.h then fails to compile.
+
+Files changed
+-------------
+1) mxser/driver/kernel6.x/Makefile
+
+   - Removed the top-level line:
+       EXTRA_CFLAGS += -DOS_LINUX
+
+   - Added a short comment noting that EXTRA_CFLAGS is ignored for OOT modules
+     on newer kbuild and that ccflags-y should be used instead.
+
+   - Inside the existing block `ifneq ($(KERNELRELEASE),)`, before obj-m,
+     added:
+       ccflags-y += -DOS_LINUX
+
+     This ensures -DOS_LINUX is passed when the kernel build recursively includes
+     this Makefile with KERNELRELEASE set.
+
+   - Updated the module_k6p1 recipe from:
+       $(MAKE) EXTRA_CFLAGS+=" -DOS_LINUX -DKERNEL6_PATCH1" ...
+     to:
+       $(MAKE) KCFLAGS=-DKERNEL6_PATCH1 ...
+
+     Rationale: -DOS_LINUX now comes from ccflags-y; KERNEL6_PATCH1 is passed
+     via KCFLAGS so it still reaches the compiler for that alternate build path.
+
+No other files in this driver tree were modified as part of this fix.
+
+Verification (local)
+--------------------
+After these edits, from mxser/driver/kernel6.x:
+
+    make clean
+    make -C /lib/modules/$(uname -r)/build M=$(pwd) modules
+
+completed successfully, producing mxser.ko and mxupcie.ko (warnings only).
+
+How to install after patching
+-----------------------------
+From mxser:  sudo ./mxinstall
+Or from mxser/driver/kernel6.x:  sudo make install
+
+Date / provenance
+-----------------
+Changes recorded for PowerOx; applied against Moxa package directory:
+  moxa-multiport-serial-pci-express-and-universal-pci-boards-linux-kernel-6.x-driver-v6.1
+
+If you unpack a fresh copy from Moxa, re-apply the same edits to
+mxser/driver/kernel6.x/Makefile or keep this POWEROX_CHANGES.txt alongside your
+patched tree for reference.
